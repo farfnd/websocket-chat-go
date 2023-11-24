@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>WebSocket Chat</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h2>WebSocket Chat</h2>
+        <div class="form-group">
+          <label for="username">Enter Username:</label>
+          <input type="text" class="form-control" id="username" placeholder="Username">
+          <button class="btn btn-primary mt-2" onclick="confirmUsername()">Confirm</button>
+        </div>
+        <div id="chatBox" style="height: 300px; overflow-y: scroll;"></div>
+        <div class="form-group mt-3">
+          <input type="text" class="form-control" id="message" placeholder="Type a message...">
+          <button class="btn btn-primary mt-2" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and jQuery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script type="text/javascript">
+    var socket = new WebSocket("ws://localhost:8080/ws");
+    var username = "";
+
+    function confirmUsername() {
+      var usernameInput = document.getElementById("username");
+      username = usernameInput.value;
+      if (username.trim() === "") {
+        alert("Please enter a username.");
+        return;
+      }
+      usernameInput.setAttribute("readonly", true);
+    }
+
+    socket.onmessage = function (event) {
+      var msg = JSON.parse(event.data);
+      var chatBox = document.getElementById("chatBox");
+      var message = '<div><strong>' + msg.username + ':</strong> ' + msg.message + '</div>';
+      if (msg.username === username) {
+        message = '<div class="text-right"><strong>You:</strong> ' + msg.message + '</div>';
+      }
+      chatBox.innerHTML += message;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    function sendMessage() {
+      var messageInput = document.getElementById("message");
+      var message = messageInput.value;
+      if (username === "") {
+        alert("Please enter a username first.");
+        return;
+      }
+      if (message.trim() !== "") {
+        var msg = {
+          username: username,
+          message: message
+        };
+        socket.send(JSON.stringify(msg));
+        messageInput.value = '';
+      }
+    }
+
+    window.onload = function () {
+      document.getElementById("username").focus();
+    };
+  </script>
+</body>
+
+</html>
